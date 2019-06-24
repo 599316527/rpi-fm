@@ -1,5 +1,5 @@
 const path = require('path');
-const Player = require('./player');
+// const Player = require('../lib/player');
 
 module.exports = [
     {
@@ -17,6 +17,15 @@ module.exports = [
         //         random: true
         //     });
         // },
+        type: 'playlist',
+        random: true,
+        file: path.join(__dirname, 'morningcall.lst')
+    },
+    {
+        name: 'Weekday Morning',
+        timeMatch() {
+            return isNowWeekday() && isNowInTimeRange([23, 42], [23, 50]);
+        },
         type: 'playlist',
         random: true,
         file: path.join(__dirname, 'morningcall.lst')

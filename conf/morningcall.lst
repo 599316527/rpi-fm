@@ -1,3 +1,5 @@
 # 允许绝对路径和相对路径（相对于本文件）
-../../music/example.mp3
-/home/pi/music/example.mp3
+/home/pi/download/music/1ab375b3-fe66-4263-bede-96f27efa7c62.mp3
+/home/pi/download/music/liliwanxiang.mp3
+/home/pi/download/music/qilou.mp3
+/home/pi/download/music/qimiaonenlige.mp3

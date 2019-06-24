@@ -17,7 +17,7 @@ router.post('/status', async (ctx, next) => {
 });
 
 router.put('/:key/:value', async (ctx, next) => {
-    let {key, value} = ctx.request.params;
+    let {key, value} = ctx.params;
 
     if (key === 'power') {
         await (value === 'on' ? fm.powerOn() : fm.powerOff());
@@ -51,7 +51,7 @@ router.get('/job/status', async (ctx, next) => {
 });
 
 router.put('/job/:key/:value', async (ctx, next) => {
-    let {key, value} = ctx.request.params;
+    let {key, value} = ctx.params;
 
     if (key === 'schedule') {
         if (value === 'on') {
@@ -62,7 +62,7 @@ router.put('/job/:key/:value', async (ctx, next) => {
         }
     }
     else if (key === 'run') {
-        schedule.runJob(parseInt(value, 10));
+        await schedule.runJob(parseInt(value, 10));
     }
     else if (key === 'stop') {
         schedule.stopJob();
