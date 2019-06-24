@@ -1,3 +1,4 @@
+const path = require('path');
 const Player = require('./player');
 
 module.exports = [
@@ -6,16 +7,19 @@ module.exports = [
         timeMatch() {
             return isNowWeekday() && isNowInTimeRange([7, 18], [8, 20]);
         },
-        runner() {
-            // TODO: read playlist file
-            return new Player([
-                '/Users/hekai/Downloads/lizhi/111.mp3',
-                '/Users/hekai/Downloads/lizhi/广场.Live.mp3',
-                '/Users/hekai/Downloads/lizhi/鹿港小镇.mp3'
-            ], {
-                random: true
-            });
-        }
+        // type: 'custom',
+        // runner() {
+        //     return new Player([
+        //         '/Users/hekai/Downloads/lizhi/111.mp3',
+        //         '/Users/hekai/Downloads/lizhi/广场.Live.mp3',
+        //         '/Users/hekai/Downloads/lizhi/鹿港小镇.mp3'
+        //     ], {
+        //         random: true
+        //     });
+        // },
+        type: 'playlist',
+        random: true,
+        file: path.join(__dirname, 'morningcall.lst')
     }
 ];
 
