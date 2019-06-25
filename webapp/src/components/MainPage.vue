@@ -1,6 +1,6 @@
 <template>
 <div class="main">
-    <h1>RPI FM Console</h1>
+    <h1>树莓FM 设置</h1>
     <div class="content">
 
         <div class="list" :class="{disabled: !powerOn}">
@@ -67,24 +67,20 @@
 
         </div>
     </div>
-    <div class="overlay-loading" v-if="isLoading">
-        <Loading />
-    </div>
 </div>
 </template>
 
 <script>
-import {debounce} from 'lodash';
+import {debounce, clamp} from 'lodash';
 import Switch from './Switch';
 import FreqInput from './FreqInput';
-import Loading from './Loading';
+import shared from '../shared';
 
 export default {
     name: 'MainPage',
     components: {
         iSwitch: Switch,
-        FreqInput,
-        Loading
+        FreqInput
     },
     data() {
         return {
@@ -96,9 +92,7 @@ export default {
             isCampus: false,
 
             isLightOn: true,
-            lightDelay: 20,
-
-            isLoading: false
+            lightDelay: 20
         };
     },
     computed: {
@@ -112,7 +106,7 @@ export default {
             return 'volume-' + ['mute', 'low', 'middle', 'high'][Math.ceil(this.volume / 10)];
         },
         debounceSendCommand() {
-            return debounce(this.sendCommand, 500);
+            return debounce(this.sendCommand, 550);
         }
     },
     watch: {
@@ -140,7 +134,7 @@ export default {
     },
     methods: {
         async sendCommand(key, value) {
-            this.isLoading = true;
+            shared.setLoading(true);
             let method = value ? 'PUT' : 'POST';
             let requestPath = ['', 'data', key].concat(value || [])
                                 .map(item => encodeURIComponent(item)).join('/');
@@ -149,15 +143,23 @@ export default {
                 data = await fetch(requestPath, {method}).json();
             }
             catch (err) {
-                alert('Send command fail');
+                shared.contextMenu({
+                    description: '发送指令失败',
+                    options: [],
+                    cancelButtonText: '好'
+                });
             }
             if (data) {
-                Object.assign(this, data);
+                Object.assign(this, parseStateResponse(data));
             }
-            this.isLoading = false;
+            shared.setLoading(false);
         },
-        handleResetBtnClick() {
-            if (confirm('Confirm to reset?')) {
+        async handleResetBtnClick() {
+            let result = await shared.contextMenu([{
+                type: 'danger',
+                text: '复位确认?'
+            }]);
+            if (result === 0) {
                 this.debounceSendCommand('reset', 'true');
             }
         }
@@ -165,6 +167,25 @@ export default {
     mounted() {
         this.sendCommand('status');
     }
+}
+
+function parseStateResponse({
+    isPowerOn,
+    freq,
+    volume,
+    isPause,
+    backLightDelay,
+    isCampusOff
+}) {
+    return {
+        powerOn: isPowerOn,
+        volume,
+        freq,
+        isPause,
+        isCampus: isCampusOff,
+        isLightOn: backLightDelay > 0,
+        lightDelay: clamp(backLightDelay, 2, 30)
+    };
 }
 </script>
 
@@ -174,7 +195,7 @@ export default {
 
 h1 {
     margin: 0;
-    padding: 20px @horizontal-padding 10px;
+    padding: 24px @horizontal-padding 6px;
     background-color: white;
     border-bottom: 1px solid @border-color;
 }
@@ -222,7 +243,7 @@ h1 {
     }
 
     button {
-        color: #3030fb;
+        color: #0079ff;
         font-size: 0.9em;
         border: none;
         background-color: transparent;
@@ -289,21 +310,6 @@ h1 {
 }
 .icon[name=reset] {
     background-image: url(../assets/icon/reset.png);
-}
-
-.overlay-loading {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-
-    .loading {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    }
 }
 
 </style>
