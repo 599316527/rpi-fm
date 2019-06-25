@@ -2,7 +2,7 @@
 <div class="freq-input">
     <button class="btn btn-minus" @click="handleClick(-1)">-</button>
     <div class="display">
-        <span class="value">{{ formattedValue }}</span>
+        <span class="value"><pre>{{ formattedValue }}</pre></span>
         <span class="unit">MHz</span>
     </div>
     <button class="btn btn-plus" @click="handleClick(1)">+</button>
@@ -25,12 +25,16 @@ export default {
     },
     computed: {
         formattedValue() {
-            return this.value / 10 + (this.value % 10 ? '' : '.0');
+            let val = this.value / 10 + (this.value % 10 ? '' : '.0');
+            return val.padStart(5, ' ');
         }
     },
     methods: {
         handleClick(sign) {
-            this.$emit('change', clamp(this.value + this.step * sign, this.min, this.max));
+            let val = this.value + this.step * sign;
+            if (val < this.min) val = this.max;
+            if (val > this.max) val = this.min;
+            this.$emit('change', val);
         }
     }
 }
@@ -49,13 +53,21 @@ export default {
     font-weight: 300;
     border: none;
     background-color: transparent;
-    padding: 0;
+    padding: 0 3px;
     text-shadow: 0 0 2px #ccc;
     color: #333;
 }
 
 .display {
-    margin: 0 8px;
+    margin: 0 2px;
+}
+
+.value {
+    pre {
+        font-family: inherit;
+        margin: 0;
+        display: inherit;
+    }
 }
 
 .unit {
