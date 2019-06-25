@@ -65,10 +65,10 @@ router.put('/job/:key/:value', async (ctx, next) => {
         await schedule.runJob(parseInt(value, 10));
     }
     else if (key === 'stop') {
-        schedule.stopJob();
+        schedule.stopJob(parseInt(value, 10));
     }
 
-    ctx.body = 'OK';
+    ctx.body = schedule.status();
 });
 
 

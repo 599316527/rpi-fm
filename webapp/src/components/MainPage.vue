@@ -3,53 +3,51 @@
     <h1>树莓FM 设置</h1>
     <div class="content">
 
-        <div class="list" :class="{disabled: !powerOn}">
-            <!-- <h2>FM Transmitter Settings</h2> -->
-
+        <div class="list fm-settings" :class="{disabled: !powerOn}">
             <div class="row">
-                <div class="icon" name="power"></div>
+                <Icon name="power"/>
                 <div class="item">
                     <div class="title">电源</div>
                     <iSwitch v-model="powerOn" />
                 </div>
             </div>
             <div class="row">
-                <div class="icon" :name="playPauseIconName"></div>
+                <Icon :name="playPauseIconName"/>
                 <div class="item">
                     <div class="title">播放中</div>
                     <iSwitch v-model="isPause" />
                 </div>
             </div>
             <div class="row">
-                <div class="icon" name="campus"></div>
+                <Icon name="campus"/>
                 <div class="item">
                     <div class="title">校园广播</div>
                     <iSwitch v-model="isCampus" />
                 </div>
             </div>
             <div class="row">
-                <div class="icon" name="freq"></div>
+                <Icon name="freq"/>
                 <div class="item">
                     <div class="title">频率</div>
                     <FreqInput v-model.number="freq" :min="minFreq" :max="1080" :step="1" />
                 </div>
             </div>
             <div class="row">
-                <div class="icon" :name="volumeIconName"></div>
+                <Icon :name="volumeIconName"/>
                 <div class="item">
                     <div class="title">音量</div>
                     <input type="range" v-model.number="volume" min="0" max="30" step="1" />
                 </div>
             </div>
             <div class="row has-light">
-                <div class="icon" name="light"></div>
+                <Icon name="light"/>
                 <div class="item">
                     <div class="title">背光</div>
                     <iSwitch v-model="isLightOn" />
                 </div>
             </div>
             <div class="row light-delay" v-if="isLightOn">
-                <div class="icon" name="time"></div>
+                <Icon name="time"/>
                 <div class="item" @click="$refs.lightDelayInput.focus()">
                     <div class="title">背光延迟</div>
                     <div>
@@ -59,28 +57,48 @@
                 </div>
             </div>
             <div class="row">
-                <div class="icon" name="reset"></div>
+                <Icon name="reset"/>
                 <div class="item">
                     <button @click="handleResetBtnClick">复位</button>
                 </div>
             </div>
-
         </div>
+
+
+        <div class="list schedule-settings" :class="{disabled: !powerOn}">
+            <div class="row">
+                <Icon name="schedule"/>
+                <div class="item">
+                    <div class="title">播放排期</div>
+                    <iSwitch v-model="scheduled" />
+                </div>
+            </div>
+            <div class="row" v-for="(name, type, isRunning) in jobs" :key="name" :class="{running: isRunning}">
+                <Icon :name="type"/>
+                <div class="item">
+                    <div class="title">{{ name }}</div>
+                    <Icon :name="isRunning ? 'stop' : 'start'"/>
+                </div>
+            </div>
+        </div>
+
     </div>
 </div>
 </template>
 
 <script>
-import {debounce, clamp} from 'lodash';
+import {debounce, clamp, identity, noop} from 'lodash';
 import Switch from './Switch';
 import FreqInput from './FreqInput';
+import Icon from './Icon';
 import shared from '../shared';
 
 export default {
     name: 'MainPage',
     components: {
         iSwitch: Switch,
-        FreqInput
+        FreqInput,
+        Icon
     },
     data() {
         return {
@@ -92,7 +110,10 @@ export default {
             isCampus: false,
 
             isLightOn: true,
-            lightDelay: 20
+            lightDelay: 20,
+
+            scheduled: false,
+            jobs: []
         };
     },
     computed: {
@@ -105,38 +126,50 @@ export default {
         volumeIconName() {
             return 'volume-' + ['mute', 'low', 'middle', 'high'][Math.ceil(this.volume / 10)];
         },
-        debounceSendCommand() {
-            return debounce(this.sendCommand, 550);
+        debounceSendFMCommand() {
+            return debounce(this.sendFMCommand, 550);
+        },
+        debounceSendJobCommand() {
+            return debounce(this.sendJobCommand, 550);
         }
     },
     watch: {
         powerOn(val) {
-            this.debounceSendCommand('power', val ? 'on' : 'off');
+            this.debounceSendFMCommand('power', val ? 'on' : 'off');
         },
         volume(val) {
-            this.debounceSendCommand('volume', val);
+            this.debounceSendFMCommand('volume', val);
         },
         freq(val) {
-            this.debounceSendCommand('freq', val);
+            this.debounceSendFMCommand('freq', val);
         },
         isPause(val) {
-            this.debounceSendCommand('play', val ? 0 : 1);
+            this.debounceSendFMCommand('play', val ? 0 : 1);
         },
         isCampus(val) {
-            this.debounceSendCommand('campus', val ? 1 : 0);
+            this.debounceSendFMCommand('campus', val ? 1 : 0);
         },
         isLightOn(val) {
-            this.debounceSendCommand('light', val ? this.lightDelay : 0);
+            this.debounceSendFMCommand('light', val ? this.lightDelay : 0);
         },
         lightDelay(val) {
-            this.debounceSendCommand('light', this.isLightOn ? val : 0);
+            this.debounceSendFMCommand('light', this.isLightOn ? val : 0);
+        },
+
+        scheduled(val) {
+            this.debounceSendJobCommand('schedule', val ? 'on' : 'off');
         }
     },
     methods: {
-        async sendCommand(key, value) {
+        async sendCommand(key, value, {
+            methodPicker = noop,
+            requestURLPreix = '/',
+            responseParser = identity,
+            commandDescription = '发送指令'
+        }) {
             shared.setLoading(true);
-            let method = value ? 'PUT' : 'POST';
-            let requestPath = ['', 'data', key].concat(value || [])
+            let method = methodPicker(key, value) || 'GET';
+            let requestPath = [requestURLPreix, key].concat(value || [])
                                 .map(item => encodeURIComponent(item)).join('/');
             let data;
             try {
@@ -144,15 +177,26 @@ export default {
             }
             catch (err) {
                 shared.contextMenu({
-                    description: '发送指令失败',
+                    description: commandDescription + '失败',
                     options: [],
                     cancelButtonText: '好'
                 });
             }
             if (data) {
-                Object.assign(this, parseStateResponse(data));
+                Object.assign(this, responseParser(data));
             }
             shared.setLoading(false);
+        },
+
+        async sendFMCommand(key, value) {
+            await this.sendCommand(key, value, {
+                methodPicker(key, value) {
+                    return value ? 'PUT' : 'POST';
+                },
+                requestURLPreix: '/data',
+                responseParser: parseStatusResponse,
+                commandDescription: '发送 FM 指令'
+            });
         },
         async handleResetBtnClick() {
             let result = await shared.contextMenu([{
@@ -160,16 +204,27 @@ export default {
                 text: '复位确认?'
             }]);
             if (result === 0) {
-                this.debounceSendCommand('reset', 'true');
+                this.debounceSendFMCommand('reset', 'true');
             }
-        }
+        },
+
+        async sendJobCommand(key, value) {
+            await this.sendCommand(key, value, {
+                methodPicker(key, value) {
+                    return value ? 'PUT' : 'GET';
+                },
+                requestURLPreix: '/data/job',
+                commandDescription: '更新任务'
+            });
+        },
     },
     mounted() {
-        this.sendCommand('status');
+        this.sendFMCommand('status');
+        this.sendJobCommand('status');
     }
 }
 
-function parseStateResponse({
+function parseStatusResponse({
     isPowerOn,
     freq,
     volume,
@@ -213,12 +268,7 @@ h1 {
         transition: opacity 100ms;
 
         .icon {
-            width: 24px;
-            height: 24px;
             margin-right: @horizontal-padding / 1.5;
-            background-repeat: no-repeat;
-            background-position: center;
-            background-size: contain;
         }
 
         .title {
@@ -255,9 +305,6 @@ h1 {
         .row {
             opacity: .5;
         }
-        .row:first-child {
-            opacity: 1;
-        }
     }
 
     .light-delay {
@@ -273,43 +320,28 @@ h1 {
         }
     }
 
-}
+    &.fm-settings.disabled {
+        .row:first-child {
+            opacity: 1;
+        }
+    }
 
-.icon[name=power] {
-    background-image: url(../assets/icon/shutdown.png);
-}
-.icon[name=play] {
-    background-image: url(../assets/icon/play.png);
-}
-.icon[name=pause] {
-    background-image: url(../assets/icon/pause.png);
-}
-.icon[name=campus] {
-    background-image: url(../assets/icon/nerd.png);
-}
-.icon[name=freq] {
-    background-image: url(../assets/icon/wifi.png);
-}
-.icon[name=volume-mute] {
-    background-image: url(../assets/icon/mute.png);
-}
-.icon[name=volume-low] {
-    background-image: url(../assets/icon/low-volume.png);
-}
-.icon[name=volume-middle] {
-    background-image: url(../assets/icon/voice.png);
-}
-.icon[name=volume-high] {
-    background-image: url(../assets/icon/audio.png);
-}
-.icon[name=light] {
-    background-image: url(../assets/icon/idea.png);
-}
-.icon[name=time] {
-    background-image: url(../assets/icon/time-machine.png);
-}
-.icon[name=reset] {
-    background-image: url(../assets/icon/reset.png);
+    &.schedule-settings {
+        .row {
+            &.running {
+                .title {
+                    font-weight: 500;
+                }
+            }
+        }
+        .item {
+            .icon {
+                width: 20px;
+                height: 20px;
+            }
+        }
+    }
+
 }
 
 </style>

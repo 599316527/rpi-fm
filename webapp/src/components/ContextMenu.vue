@@ -1,7 +1,7 @@
 <template>
 <div class="context-menu">
     <transition name="fade">
-        <div class="overlay" v-for="({key, options, description, cancelButtonText}) in menus" :key="key" @click="remove(key)">
+        <div class="overlay" v-for="({key, options, description, cancelButtonText}) in menus" :key="key" @click="resolve(key, -1)">
             <div class="menu" @click.stop="handleMenuClick">
                 <div class="block">
                     <div class="item description" v-if="description">{{ description }}</div>
@@ -59,7 +59,9 @@ export default {
         handleMenuClick(event) {
             let {target: {dataset: {key, index}}} = event;
             if (!key) return;
-            index = parseInt(index, 10);
+            this.resolve(key, parseInt(index, 10));
+        },
+        resolve(key, index) {
             let {options, callback} = this.menus.find(menu => menu.key === key);
             this.remove(key);
             callback.resolve(index, index >= 0 ? options[index] : null);
@@ -78,7 +80,7 @@ export default {
     right: 0;
     bottom: 0;
     left: 0;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.1);
 }
 .menu {
     position: absolute;
