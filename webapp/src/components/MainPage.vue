@@ -74,11 +74,15 @@
                     <iSwitch v-model="scheduled" />
                 </div>
             </div>
-            <div class="row" v-for="({name, type, isRunning}, index) in jobs" :key="name + index" :class="{running: isRunning}">
+            <div class="row" v-for="({name, type, isRunning, at, duration}, index) in jobs"
+                :key="name + index" :class="{running: isRunning}">
                 <Icon :name="type"/>
                 <div class="item">
                     <div class="title">{{ name }}</div>
-                    <Icon :name="isRunning ? 'start' : ''"/>
+                    <div class="desc">
+                        <div class="at">{{ at }}</div>
+                        <div class="duration">持续 {{ duration }}秒</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -338,9 +342,16 @@ h1 {
             }
         }
         .item {
-            .icon {
-                width: 20px;
-                height: 20px;
+            .desc {
+                font-size: 12px;
+                color: #555;
+            }
+            .at {
+                &::befoer,
+                &::after {
+                    content: "\"";
+                    font-size: 0.9em;
+                }
             }
         }
     }
