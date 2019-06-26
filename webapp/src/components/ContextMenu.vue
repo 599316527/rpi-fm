@@ -1,16 +1,18 @@
 <template>
 <div class="context-menu">
     <transition name="fade">
-        <div class="overlay" v-for="({key, options, description, cancelButtonText}) in menus" :key="key" @click="resolve(key, -1)">
-            <div class="menu" @click.stop="handleMenuClick">
-                <div class="block">
-                    <div class="item description" v-if="description">{{ description }}</div>
-                    <button v-for="({type, text}, index) in options" :key="index"
-                        :data-key="key" :data-index="index"
-                        class="item" :class="{[type]: true}">{{ text }}</button>
-                </div>
-                <div class="block">
-                    <button class="item cancel" :data-key="key" :data-index="-1">{{ cancelButtonText || '取消' }}</button>
+        <div>
+            <div class="overlay" v-for="({key, options, description, cancelButtonText}) in menus" :key="key" @click="resolve(key, -1)">
+                <div class="menu" @click.stop="handleMenuClick">
+                    <div class="block">
+                        <div class="item description" v-if="description">{{ description }}</div>
+                        <button v-for="({type, text}, index) in options" :key="index"
+                            :data-key="key" :data-index="index"
+                            class="item" :class="{[type]: true}">{{ text }}</button>
+                    </div>
+                    <div class="block">
+                        <button class="item cancel" :data-key="key" :data-index="-1">{{ cancelButtonText || '取消' }}</button>
+                    </div>
                 </div>
             </div>
         </div>

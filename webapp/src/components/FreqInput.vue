@@ -34,7 +34,8 @@ export default {
         value: Number,
         min: Number,
         max: Number,
-        step: Number
+        step: Number,
+        disabled: Boolean
     },
     model: {
         prop: 'value',
@@ -51,13 +52,14 @@ export default {
     },
     methods: {
         update(val) {
+            if (this.disabled) return;
             this.$emit('change', clamp(val, this.min, this.max));
         },
         increase(sign) {
             let val = this.value + this.step * sign;
             if (val < this.min) val = this.max;
             if (val > this.max) val = this.min;
-            this.$emit('change', val);
+            this.update(val);
         },
 
         handleBtnPointerDown(sign) {

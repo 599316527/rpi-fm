@@ -15,35 +15,35 @@
                 <Icon :name="playPauseIconName"/>
                 <div class="item">
                     <div class="title">播放中</div>
-                    <iSwitch v-model="isPause" />
+                    <iSwitch v-model="isPause" :disabled="!powerOn" />
                 </div>
             </div>
             <div class="row">
                 <Icon name="campus"/>
                 <div class="item">
                     <div class="title">校园广播</div>
-                    <iSwitch v-model="isCampus" />
+                    <iSwitch v-model="isCampus" :disabled="!powerOn" />
                 </div>
             </div>
             <div class="row">
                 <Icon name="freq"/>
                 <div class="item">
                     <div class="title">频率</div>
-                    <FreqInput v-model.number="freq" :min="minFreq" :max="1080" :step="1" />
+                    <FreqInput v-model.number="freq" :min="minFreq" :max="1080" :step="1" :disabled="!powerOn" />
                 </div>
             </div>
             <div class="row">
                 <Icon :name="volumeIconName"/>
                 <div class="item">
                     <div class="title">音量</div>
-                    <input type="range" v-model.number="volume" min="0" max="30" step="1" />
+                    <input type="range" v-model.number="volume" min="0" max="30" step="1" :disabled="!powerOn" />
                 </div>
             </div>
             <div class="row has-light">
                 <Icon name="light"/>
                 <div class="item">
                     <div class="title">背光</div>
-                    <iSwitch v-model="isLightOn" />
+                    <iSwitch v-model="isLightOn" :disabled="!powerOn" />
                 </div>
             </div>
             <div class="row light-delay" v-if="isLightOn">
@@ -51,7 +51,8 @@
                 <div class="item" @click="$refs.lightDelayInput.focus()">
                     <div class="title">背光延迟</div>
                     <div>
-                        <input type="number" ref="lightDelayInput" v-model.number.trim.lazy="lightDelay" min="2" max="99" step="1" />
+                        <input type="number" ref="lightDelayInput" v-model.number.trim.lazy="lightDelay"
+                            min="2" max="99" step="1" :disabled="!powerOn" />
                         <small>秒</small>
                     </div>
                 </div>
@@ -59,13 +60,13 @@
             <div class="row">
                 <Icon name="reset"/>
                 <div class="item">
-                    <button @click="handleResetBtnClick">复位</button>
+                    <button @click="handleResetBtnClick" :disabled="!powerOn">复位</button>
                 </div>
             </div>
         </div>
 
 
-        <div class="list schedule-settings" :class="{disabled: !powerOn}">
+        <div class="list schedule-settings">
             <div class="row">
                 <Icon name="schedule"/>
                 <div class="item">
@@ -73,11 +74,11 @@
                     <iSwitch v-model="scheduled" />
                 </div>
             </div>
-            <div class="row" v-for="(name, type, isRunning) in jobs" :key="name" :class="{running: isRunning}">
+            <div class="row" v-for="({name, type, isRunning}, index) in jobs" :key="name + index" :class="{running: isRunning}">
                 <Icon :name="type"/>
                 <div class="item">
                     <div class="title">{{ name }}</div>
-                    <Icon :name="isRunning ? 'stop' : 'start'"/>
+                    <Icon :name="isRunning ? 'start' : ''"/>
                 </div>
             </div>
         </div>
@@ -169,11 +170,12 @@ export default {
         }) {
             shared.setLoading(true);
             let method = methodPicker(key, value) || 'GET';
-            let requestPath = [requestURLPreix, key].concat(value || [])
+            let requestPath = requestURLPreix + '/' + [key].concat(value || [])
                                 .map(item => encodeURIComponent(item)).join('/');
             let data;
             try {
-                data = await fetch(requestPath, {method}).json();
+                let res = await fetch(requestPath, {method});
+                data = await res.json();
             }
             catch (err) {
                 shared.contextMenu({

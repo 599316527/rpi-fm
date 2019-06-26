@@ -23,5 +23,3 @@ app.listen(port, host, function () {
 });
 
 
-
-schedule.start();

@@ -7,7 +7,8 @@
 <script>
 export default {
     props: {
-        value: Boolean
+        value: Boolean,
+        disabled: Boolean
     },
     model: {
         prop: 'value',
@@ -15,6 +16,7 @@ export default {
     },
     methods: {
         handleClick() {
+            if (this.disabled) return;
             this.$emit('change', !this.value);
         }
     }
