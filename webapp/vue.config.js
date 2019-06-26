@@ -1,12 +1,17 @@
 const path = require('path');
 
+const devProxyTarget = 'http://192.168.2.197:8000';
+
 module.exports = {
     publicPath: './',
     outputDir: path.resolve(__dirname, '../static'),
     devServer: {
         proxy: {
-            '/data': {
-                target: 'http://192.168.2.197:8000'
+            '/fm': {
+                target: devProxyTarget
+            },
+            '/job': {
+                target: devProxyTarget
             }
         }
     }

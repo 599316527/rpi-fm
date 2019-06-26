@@ -3,20 +3,18 @@ const Router = require('koa-router');
 const fm = require('../lib/fm');
 const schedule = require('../lib/schedule');
 
-let router = new Router({
-    prefix: '/data'
-});
+let router = new Router({});
 module.exports = router;
 
-router.get('/status', async (ctx, next) => {
+router.get('/fm/status', async (ctx, next) => {
     ctx.body = await fm.getCurrentStatus(true);
 });
 
-router.post('/status', async (ctx, next) => {
+router.post('/fm/status', async (ctx, next) => {
     ctx.body = await fm.getCurrentStatus();
 });
 
-router.put('/:key/:value', async (ctx, next) => {
+router.put('/fm/:key/:value', async (ctx, next) => {
     let {key, value} = ctx.params;
 
     if (key === 'power') {

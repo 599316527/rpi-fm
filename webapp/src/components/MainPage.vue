@@ -22,7 +22,7 @@
                 <Icon name="campus"/>
                 <div class="item">
                     <div class="title">校园广播</div>
-                    <iSwitch v-model="isCampus" :disabled="!powerOn" />
+                    <iSwitch v-model="isCampusOn" :disabled="!powerOn" />
                 </div>
             </div>
             <div class="row">
@@ -108,7 +108,7 @@ export default {
             freq: 875,
 
             isPause: false,
-            isCampus: false,
+            isCampusOn: false,
 
             isLightOn: true,
             lightDelay: 20,
@@ -119,7 +119,7 @@ export default {
     },
     computed: {
         minFreq() {
-            return this.isCampus ? 760 : 875;
+            return this.isCampusOn ? 760 : 875;
         },
         playPauseIconName() {
             return !this.isPause ? 'pause' : 'play';
@@ -147,13 +147,13 @@ export default {
         isPause(val) {
             this.debounceSendFMCommand('play', val ? 0 : 1);
         },
-        isCampus(val) {
+        isCampusOn(val) {
             this.debounceSendFMCommand('campus', val ? 1 : 0);
         },
-        isLightOn(val) {
+        isLightOn(val, oldVal) {
             this.debounceSendFMCommand('light', val ? this.lightDelay : 0);
         },
-        lightDelay(val) {
+        lightDelay(val, oldVal) {
             this.debounceSendFMCommand('light', this.isLightOn ? val : 0);
         },
 
@@ -170,7 +170,7 @@ export default {
         }) {
             shared.setLoading(true);
             let method = methodPicker(key, value) || 'GET';
-            let requestPath = requestURLPreix + '/' + [key].concat(value || [])
+            let requestPath = requestURLPreix + '/' + [key].concat(value === undefined ? [] : value)
                                 .map(item => encodeURIComponent(item)).join('/');
             let data;
             try {
@@ -191,11 +191,12 @@ export default {
         },
 
         async sendFMCommand(key, value) {
+            if (!this.powerOn && !['power', 'status'].includes(key)) return;
             await this.sendCommand(key, value, {
                 methodPicker(key, value) {
-                    return value ? 'PUT' : 'POST';
+                    return value === undefined ? 'POST' : 'PUT';
                 },
-                requestURLPreix: '/data',
+                requestURLPreix: '/fm',
                 responseParser: parseStatusResponse,
                 commandDescription: '发送 FM 指令'
             });
@@ -213,9 +214,9 @@ export default {
         async sendJobCommand(key, value) {
             await this.sendCommand(key, value, {
                 methodPicker(key, value) {
-                    return value ? 'PUT' : 'GET';
+                    return value === undefined ? 'GET' : 'PUT';
                 },
-                requestURLPreix: '/data/job',
+                requestURLPreix: '/job',
                 commandDescription: '更新任务'
             });
         },
@@ -239,7 +240,7 @@ function parseStatusResponse({
         volume,
         freq,
         isPause,
-        isCampus: isCampusOff,
+        isCampusOn: !isCampusOff,
         isLightOn: backLightDelay > 0,
         lightDelay: clamp(backLightDelay, 2, 30)
     };

@@ -6,6 +6,7 @@ const Koa = require('koa');
 const koaBody = require('koa-body');
 const koaStatic = require('koa-static');
 const schedule = require('./lib/schedule');
+const fm = require('./lib/fm');
 
 let app = new Koa();
 app.use(koaBody({jsonLimit: '50kb'}));
@@ -22,4 +23,5 @@ app.listen(port, host, function () {
     console.log(`Server is running on ${host}:${port}`);
 });
 
+fm.init();
 
