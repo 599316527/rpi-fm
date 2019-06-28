@@ -24,4 +24,4 @@ app.listen(port, host, function () {
 });
 
 fm.init();
-
+schedule.start();

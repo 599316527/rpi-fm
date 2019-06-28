@@ -8,42 +8,44 @@
                 <Icon name="power"/>
                 <div class="item">
                     <div class="title">电源</div>
-                    <iSwitch v-model="powerOn" />
+                    <iSwitch v-model="powerOn" @change="handlePowerChange" />
                 </div>
             </div>
             <div class="row">
                 <Icon :name="playPauseIconName"/>
                 <div class="item">
                     <div class="title">播放中</div>
-                    <iSwitch v-model="isPause" :disabled="!powerOn" />
+                    <iSwitch v-model="isPause" :disabled="!powerOn" @change="handleIsPauseChange" />
                 </div>
             </div>
             <div class="row">
                 <Icon name="campus"/>
                 <div class="item">
                     <div class="title">校园广播</div>
-                    <iSwitch v-model="isCampusOn" :disabled="!powerOn" />
+                    <iSwitch v-model="isCampusOn" :disabled="!powerOn" @change="handleIsCampusOnChange" />
                 </div>
             </div>
             <div class="row">
                 <Icon name="freq"/>
                 <div class="item">
                     <div class="title">频率</div>
-                    <FreqInput v-model.number="freq" :min="minFreq" :max="1080" :step="1" :disabled="!powerOn" />
+                    <FreqInput v-model.number="freq" :min="minFreq" :max="1080" :step="1"
+                        :disabled="!powerOn" @change="handleFreqChange" />
                 </div>
             </div>
             <div class="row">
                 <Icon :name="volumeIconName"/>
                 <div class="item">
                     <div class="title">音量</div>
-                    <input type="range" v-model.number="volume" min="0" max="30" step="1" :disabled="!powerOn" />
+                    <input type="range" v-model.number="volume" min="0" max="30" step="1"
+                        :disabled="!powerOn" @change="handleVolumeChange" />
                 </div>
             </div>
             <div class="row has-light">
                 <Icon name="light"/>
                 <div class="item">
                     <div class="title">背光</div>
-                    <iSwitch v-model="isLightOn" :disabled="!powerOn" />
+                    <iSwitch v-model="isLightOn" :disabled="!powerOn" @change="handleIsLightOnChange" />
                 </div>
             </div>
             <div class="row light-delay" v-if="isLightOn">
@@ -52,7 +54,8 @@
                     <div class="title">背光延迟</div>
                     <div>
                         <input type="number" ref="lightDelayInput" v-model.number.trim.lazy="lightDelay"
-                            min="2" max="99" step="1" :disabled="!powerOn" />
+                            min="2" max="99" step="1" :disabled="!powerOn"
+                            @change="handleLightDelayChange" />
                         <small>秒</small>
                     </div>
                 </div>
@@ -71,7 +74,17 @@
                 <Icon name="schedule"/>
                 <div class="item">
                     <div class="title">播放排期</div>
-                    <iSwitch v-model="scheduled" />
+                    <iSwitch v-model="scheduled" @change="handleScheduledChange" />
+                </div>
+            </div>
+            <div class="row" v-if="currentPlayName">
+                <Icon name="cd"/>
+                <div class="item">
+                    <div class="title">当前播放</div>
+                    <div class="current-play">
+                        <div class="name">{{ currentPlayName }}</div>
+                        <Icon name="next" @click="handlePlayNextBtnClick"/>
+                    </div>
                 </div>
             </div>
             <div class="row" v-for="({name, type, isRunning, at, duration}, index) in jobs"
@@ -118,7 +131,8 @@ export default {
             lightDelay: 20,
 
             scheduled: false,
-            jobs: []
+            jobs: [],
+            currentPlayName: ''
         };
     },
     computed: {
@@ -136,33 +150,6 @@ export default {
         },
         debounceSendJobCommand() {
             return debounce(this.sendJobCommand, 550);
-        }
-    },
-    watch: {
-        powerOn(val) {
-            this.debounceSendFMCommand('power', val ? 'on' : 'off');
-        },
-        volume(val) {
-            this.debounceSendFMCommand('volume', val);
-        },
-        freq(val) {
-            this.debounceSendFMCommand('freq', val);
-        },
-        isPause(val) {
-            this.debounceSendFMCommand('play', val ? 0 : 1);
-        },
-        isCampusOn(val) {
-            this.debounceSendFMCommand('campus', val ? 1 : 0);
-        },
-        isLightOn(val, oldVal) {
-            this.debounceSendFMCommand('light', val ? this.lightDelay : 0);
-        },
-        lightDelay(val, oldVal) {
-            this.debounceSendFMCommand('light', this.isLightOn ? val : 0);
-        },
-
-        scheduled(val) {
-            this.debounceSendJobCommand('schedule', val ? 'on' : 'off');
         }
     },
     methods: {
@@ -224,6 +211,41 @@ export default {
                 commandDescription: '更新任务'
             });
         },
+
+        handlePowerChange(val) {
+            this.debounceSendFMCommand('power', val ? 'on' : 'off');
+        },
+        handleVolumeChange(val) {
+            this.debounceSendFMCommand('volume', val);
+        },
+        handleFreqChange(val) {
+            this.debounceSendFMCommand('freq', val);
+        },
+        handleIsPauseChange(val) {
+            this.debounceSendFMCommand('play', val ? 0 : 1);
+        },
+        handleIsCampusOnChange(val) {
+            this.debounceSendFMCommand('campus', val ? 1 : 0);
+        },
+        handleIsLightOnChange(val) {
+            this.debounceSendFMCommand('light', val ? this.lightDelay : 0);
+        },
+        handleLightDelayChange(val) {
+            this.debounceSendFMCommand('light', this.isLightOn ? val : 0);
+        },
+        handleScheduledChange(val) {
+            this.debounceSendJobCommand('schedule', val ? 'on' : 'off');
+        },
+
+        handlePlayNextBtnClick() {
+            this.sendCommand('next', undefined, {
+                methodPicker(key, value) {
+                    return 'POST';
+                },
+                requestURLPreix: '/player',
+                commandDescription: '播放下一首'
+            });
+        }
     },
     mounted() {
         this.sendFMCommand('status');
@@ -344,7 +366,9 @@ h1 {
         .item {
             .desc {
                 font-size: 12px;
+                line-height: 1;
                 color: #555;
+                text-align: right;
             }
             .at {
                 &::befoer,
@@ -352,6 +376,21 @@ h1 {
                     content: "\"";
                     font-size: 0.9em;
                 }
+            }
+        }
+
+        .current-play {
+            display: flex;
+
+            .name {
+                width: 200px;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                overflow: hidden;
+                margin-right: 5px;
+            }
+            .icon {
+                margin-right: 0;
             }
         }
     }

@@ -71,5 +71,11 @@ export default {
 .icon[name=stop] {
     background-image: url(../assets/icon/stop-squared.png);
 }
+.icon[name=cd] {
+    background-image: url(../assets/icon/cd.png);
+}
+.icon[name=next] {
+    background-image: url(../assets/icon/next.png);
+}
 
 </style>

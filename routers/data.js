@@ -45,7 +45,10 @@ router.put('/fm/:key/:value', async (ctx, next) => {
 
 
 router.get('/job/status', async (ctx, next) => {
-    ctx.body = schedule.status();
+    ctx.body = {
+        currentPlayName: schedule.getCurrentPlayName(),
+        ...schedule.status()
+    };
 });
 
 router.put('/job/:key/:value', async (ctx, next) => {
@@ -66,10 +69,24 @@ router.put('/job/:key/:value', async (ctx, next) => {
         schedule.stopJob(parseInt(value, 10));
     }
 
-    ctx.body = schedule.status();
+    ctx.body = {
+        currentPlayName: schedule.getCurrentPlayName(),
+        ...schedule.status()
+    };
 });
 
-
+router.get('/player/current', async (ctx, next) => {
+    ctx.body = {
+        currentPlayName: schedule.getCurrentPlayName()
+    };
+});
+router.post('/player/next', async (ctx, next) => {
+    schedule.playNext();
+    await delay(500);
+    ctx.body = {
+        currentPlayName: schedule.getCurrentPlayName()
+    };
+});
 
 
 
