@@ -1,4 +1,4 @@
-
+const delay = require('delay');
 const Router = require('koa-router');
 const fm = require('../lib/fm');
 const schedule = require('../lib/schedule');
