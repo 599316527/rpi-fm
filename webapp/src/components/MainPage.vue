@@ -83,18 +83,21 @@
                     <div class="title">当前播放</div>
                     <div class="current-play">
                         <div class="name">{{ currentPlayName }}</div>
-                        <Icon name="next" @click="handlePlayNextBtnClick"/>
+                        <Icon name="next" @click.native="handlePlayNextBtnClick"/>
                     </div>
                 </div>
             </div>
             <div class="row" v-for="({name, type, isRunning, at, duration}, index) in jobs"
                 :key="name + index" :class="{running: isRunning}">
                 <Icon :name="type"/>
-                <div class="item">
+                <div class="item job">
                     <div class="title">{{ name }}</div>
                     <div class="desc">
-                        <div class="at">{{ at }}</div>
-                        <div class="duration">持续 {{ duration }}秒</div>
+                        <div>
+                            <div class="at">{{ at }}</div>
+                            <div class="duration">持续{{ duration }}秒</div>
+                        </div>
+                        <Icon :name="!isRunning ? 'play' : 'pause'" @click.native="handleJobClick(index)" />
                     </div>
                 </div>
             </div>
@@ -245,6 +248,19 @@ export default {
                 requestURLPreix: '/player',
                 commandDescription: '播放下一首'
             });
+        },
+
+        async handleJobClick(i) {
+            let job = this.jobs[i];
+            let key = job.isRunning ? 'stop' : 'run';
+            let keyTextMap = {run: '启动', stop: '停止'};
+            let result = await shared.contextMenu([{
+                type: 'normal',
+                text: `${keyTextMap[key]}任务：${job.name}`
+            }]);
+            if (result === 0) {
+                this.sendJobCommand(key, i);
+            }
         }
     },
     mounted() {
@@ -365,7 +381,7 @@ h1 {
         }
         .item {
             .desc {
-                font-size: 12px;
+                font-size: 10px;
                 line-height: 1;
                 color: #555;
                 text-align: right;
@@ -374,7 +390,17 @@ h1 {
                 &::befoer,
                 &::after {
                     content: "\"";
-                    font-size: 0.9em;
+                }
+            }
+        }
+
+        .job {
+            .desc {
+                display: flex;
+                align-items: center;
+                .icon {
+                    margin-left: 5px;
+                    margin-right: 0;
                 }
             }
         }
@@ -383,13 +409,14 @@ h1 {
             display: flex;
 
             .name {
+                text-align: right;
                 width: 200px;
                 text-overflow: ellipsis;
                 white-space: nowrap;
                 overflow: hidden;
-                margin-right: 5px;
             }
             .icon {
+                margin-left: 5px;
                 margin-right: 0;
             }
         }

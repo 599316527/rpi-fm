@@ -1,6 +1,6 @@
 const path = require('path');
 
-const devProxyTarget = 'http://127.0.0.1:8000';
+const devProxyTarget = 'http://192.168.2.197:8000';
 
 module.exports = {
     publicPath: './',
@@ -11,6 +11,9 @@ module.exports = {
                 target: devProxyTarget
             },
             '/job': {
+                target: devProxyTarget
+            },
+            '/player': {
                 target: devProxyTarget
             }
         }

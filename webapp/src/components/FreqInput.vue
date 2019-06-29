@@ -43,7 +43,8 @@ export default {
     },
     computed: {
         formattedValue() {
-            let val = this.value / 10 + (this.value % 10 ? '' : '.0');
+            let val = this.value || 0;
+            val = val / 10 + (val % 10 ? '' : '.0');
             return val.padStart(5, ' ');
         },
         bindThisHandleSliding() {
